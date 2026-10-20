@@ -1,0 +1,2 @@
+# mindmap
+chain your thoughts
