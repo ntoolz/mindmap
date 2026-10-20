@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Map</title>
+    <!-- Tailwind CSS for modern UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1f2937;
+            overflow: hidden;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+            background-color: #ffffff;
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shadow-sm">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                <i class="fa-solid fa-brain text-lg"></i>
+            </div>
+            <div>
+                <h1 id="mapTitle" class="font-bold text-slate-800 text-lg outline-none hover:bg-slate-50 px-2 py-0.5 rounded cursor-pointer transition" contenteditable="true" title="Click to rename">Mind Map</h1>
+                <p class="text-xs text-slate-400 px-2">Chain your thoughts</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <!-- Branch Color Picker -->
+            <div class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Change selected branch color & inherit to sub-children">
+                <label for="branchColorPicker" class="text-xs font-medium text-slate-600 cursor-pointer">Note Color:</label>
+                <input type="color" id="branchColorPicker" value="#fef08a" class="w-6 h-6 rounded border-0 cursor-pointer bg-transparent">
+            </div>
+
+            <div class="h-6 w-px bg-slate-200 mx-1"></div>
+
+            <button id="btnZoomIn" class="p-2.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200" title="Zoom In">
+                <i class="fa-solid fa-magnifying-glass-plus"></i>
+            </button>
+            <button id="btnZoomOut" class="p-2.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200" title="Zoom Out">
+                <i class="fa-solid fa-magnifying-glass-minus"></i>
+            </button>
+            <button id="btnResetView" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200">
+                <i class="fa-solid fa-compress mr-1.5"></i> Reset View
+            </button>
+            <div class="h-6 w-px bg-slate-200 mx-1"></div>
+            <button id="btnAddChild" class="px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-sm shadow-indigo-100 flex items-center">
+                <i class="fa-solid fa-plus mr-1.5"></i> Add Child <span class="ml-1.5 text-xs bg-indigo-500 px-1.5 py-0.5 rounded text-indigo-100">Tab</span>
+            </button>
+            <button id="btnDelete" class="p-2.5 text-rose-600 hover:bg-rose-50 rounded-lg transition border border-slate-200" title="Delete Note (Delete)">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+            <div class="h-6 w-px bg-slate-200 mx-1"></div>
+            <button id="btnExport" class="px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition flex items-center shadow-sm">
+                <i class="fa-solid fa-download mr-1.5 text-indigo-600"></i> Export PNG
+            </button>
+            <button id="btnClear" class="p-2.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition border border-slate-200" title="Reset Mind Map">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Canvas Viewport -->
+    <main class="flex-1 relative overflow-hidden bg-white">
+        <canvas id="mindmapCanvas" class="w-full h-full"></canvas>
+
+        <!-- Keyboard Shortcuts Legend -->
+        <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur border border-slate-200 p-3 rounded-xl shadow-lg text-xs text-slate-500 space-y-1 pointer-events-none">
+            <p class="font-semibold text-slate-700 mb-1">Keys:</p>
+            <p><span class="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">Tab</span> Add Child Note</p>
+            <p><span class="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">Del / Backspace</span> Delete Note</p>
+
+            <p><span class="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">Double Click</span> Edit Text (max 255 chars)</p>
+        </div>
+
+        <!-- Node Inline Textarea Editor (Hidden by default) -->
+        <textarea id="nodeInput" maxlength="255" class="absolute hidden z-25 p-3 text-sm bg-amber-50 border-2 border-amber-400 rounded shadow-2xl outline-none font-medium text-slate-900 resize-none"></textarea>
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastMessage">Action completed successfully</span>
+    </div>
+
+    <script>
+        // Sticky Note Mind Map Node Model
+        class MindMapNode {
+            constructor(id, text, x = 0, y = 0, color = '#fef08a') {
+                this.id = id;
+                this.text = text;
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.children = [];
+                this.width = 120; // Minimum initial width
+                this.height = 50; // Minimum initial height
+                this.collapsed = false;
+                // Random default tilt between -5 and +5 degrees for sticky note feel
+
+                if(id == `1`)
+                    this.defaultRotation = 0;
+                else
+                    this.defaultRotation = (Math.random() * 20 - 10) * (Math.PI / 180);
+                
+                    this.currentRotation = this.defaultRotation;
+            }
+        }
+
+        class MindMapApp {
+            constructor() {
+                this.canvas = document.getElementById('mindmapCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.input = document.getElementById('nodeInput');
+                this.colorPicker = document.getElementById('branchColorPicker');
+                
+                // Viewport transforms (Pan & Zoom)
+                this.scale = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+
+                // Application State
+                this.root = null;
+                this.selectedNode = null;
+                this.hoveredNode = null;
+                this.editingNode = null;
+                this.draggingNode = null;
+                this.isPanning = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.nodeDragOffset = { x: 0, y: 0 };
+
+                this.initData();
+                this.initListeners();
+                this.resizeCanvas();
+                this.centerView();
+                this.startAnimationLoop();
+            }
+
+            initData() {
+                const saved = localStorage.getItem('mindmap_stickies_data_v2');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        this.root = this.deserializeNode(parsed);
+                        const savedTitle = localStorage.getItem('mindmap_stickies_title_v2');
+                        if (savedTitle) {
+                            document.getElementById('mapTitle').innerText = savedTitle;
+                        }
+                        this.updateColorPickerValue();
+                        return;
+                    } catch (e) {
+                        console.error("Failed to parse saved data.", e);
+                    }
+                }
+
+                // Default Sticky Note Mind Map with auto-sizing nodes Visualize, organizing, brainstorming, planning, structuring, and connecting
+                this.root = new MindMapNode('1', 'My Mind', 0, 0, '#fef08a'); // Soft Yellow
+                
+                const child1 = new MindMapNode('2', 'Observe', -280, -120, '#bae6fd'); // Soft Sky Blue
+                const child2 = new MindMapNode('3', 'Orient', 280, -120, '#bbf7d0'); // Soft Green
+                const child3 = new MindMapNode('4', 'Decide', -280, 120, '#fed7aa'); // Soft Orange
+                const child4 = new MindMapNode('5', 'Act', 280, 120, '#fbcfe8'); // Soft Pink
+
+                this.root.children.push(child1, child2, child3, child4);
+                this.selectedNode = this.root;
+                this.updateColorPickerValue();
+                this.save();
+            }
+
+            deserializeNode(data) {
+                const node = new MindMapNode(data.id, data.text, data.x, data.y, data.color || '#fef08a');
+                node.collapsed = data.collapsed || false;
+                node.defaultRotation = data.defaultRotation !== undefined ? data.defaultRotation : (Math.random() * 10 - 5) * (Math.PI / 180);
+                node.currentRotation = node.defaultRotation;
+                if (data.children && Array.isArray(data.children)) {
+                    node.children = data.children.map(c => this.deserializeNode(c));
+                }
+                return node;
+            }
+
+            save() {
+                localStorage.setItem('mindmap_stickies_data_v2', JSON.stringify(this.root));
+                localStorage.setItem('mindmap_stickies_title_v2', document.getElementById('mapTitle').innerText.trim());
+            }
+
+            updateColorPickerValue() {
+                if (this.selectedNode && this.colorPicker) {
+                    this.colorPicker.value = this.selectedNode.color;
+                }
+            }
+
+            showToast(message, isError = false) {
+                const toast = document.getElementById('toast');
+                const toastMsg = document.getElementById('toastMessage');
+                const toastIcon = document.getElementById('toastIcon');
+
+                toastMsg.innerText = message;
+                toastIcon.className = isError ? "fa-solid fa-circle-exclamation text-rose-400" : "fa-solid fa-circle-check text-emerald-400";
+
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 2500);
+            }
+
+            resizeCanvas() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.canvas.width = rect.width * window.devicePixelRatio;
+                this.canvas.height = rect.height * window.devicePixelRatio;
+                this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            }
+
+            centerView() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.scale = 1;
+                this.offsetX = rect.width / 2;
+                this.offsetY = rect.height / 2;
+                if (this.root) {
+                    this.root.x = 0;
+                    this.root.y = 0;
+                }
+            }
+
+            initListeners() {
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // Canvas Mouse Interactions
+                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
+                this.canvas.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
+
+                // Color Picker Change Listener (Applies color to selected node and recursively updates all sub-children)
+                this.colorPicker.addEventListener('input', (e) => {
+                    if (this.selectedNode) {
+                        const newColor = e.target.value;
+                        const updateSubtreeColor = (node, color) => {
+                            node.color = color;
+                            if (node.children) {
+                                node.children.forEach(child => updateSubtreeColor(child, color));
+                            }
+                        };
+                        updateSubtreeColor(this.selectedNode, newColor);
+                        this.save();
+                        this.showToast("Branch color updated and inherited by sub-children");
+                    }
+                });
+
+                // UI Toolbar Buttons
+                document.getElementById('btnZoomIn').addEventListener('click', () => this.zoom(1.2));
+                document.getElementById('btnZoomOut').addEventListener('click', () => this.zoom(0.8));
+                document.getElementById('btnResetView').addEventListener('click', () => {
+                    this.centerView();
+                    this.showToast("View reset to center");
+                });
+                document.getElementById('btnAddChild').addEventListener('click', () => this.addChildNode());
+                document.getElementById('btnDelete').addEventListener('click', () => this.deleteSelectedNode());
+                document.getElementById('btnClear').addEventListener('click', () => {
+                    if (confirm("Reset sticky note mind map to default template?")) {
+                        localStorage.removeItem('mindmap_stickies_data_v2');
+                        localStorage.removeItem('mindmap_stickies_title_v2');
+                        document.getElementById('mapTitle').innerText = "My Mind Map";
+                        this.initData();
+                        this.centerView();
+                        this.showToast("Mind map reset successfully");
+                    }
+                });
+                document.getElementById('btnExport').addEventListener('click', () => this.exportPNG());
+
+                document.getElementById('mapTitle').addEventListener('blur', () => this.save());
+
+                // Inline input events for text editing
+                this.input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        e.preventDefault();
+                        this.finishEditing(true);
+                    } else if (e.key === 'Escape') {
+                        this.finishEditing(false);
+                    }
+                });
+                this.input.addEventListener('blur', () => this.finishEditing(true));
+
+                // Global Keyboard Shortcuts (Explicitly NO Enter key binding for sibling nodes)
+                window.addEventListener('keydown', (e) => {
+                    if (this.editingNode) return;
+                    if (document.activeElement.id === 'mapTitle') return;
+
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        this.addChildNode();
+                    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                        e.preventDefault();
+                        this.deleteSelectedNode();
+                    }
+                });
+            }
+
+            screenToCanvas(screenX, screenY) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (screenX - rect.left - this.offsetX) / this.scale;
+                const y = (screenY - rect.top - this.offsetY) / this.scale;
+                return { x, y };
+            }
+
+            canvasToScreen(canvasX, canvasY) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = canvasX * this.scale + this.offsetX + rect.left;
+                const y = canvasY * this.scale + this.offsetY + rect.top;
+                return { x, y };
+            }
+
+            findNodeAt(canvasX, canvasY, node = this.root) {
+                if (!node) return null;
+                const halfW = node.width / 2;
+                const halfH = node.height / 2;
+                if (canvasX >= node.x - halfW && canvasX <= node.x + halfW &&
+                    canvasY >= node.y - halfH && canvasY <= node.y + halfH) {
+                    return node;
+                }
+                if (!node.collapsed && node.children) {
+                    for (let child of node.children) {
+                        const found = this.findNodeAt(canvasX, canvasY, child);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            }
+
+            findParentNode(targetNode, node = this.root) {
+                if (!node || !node.children) return null;
+                if (node.children.includes(targetNode)) return node;
+                for (let child of node.children) {
+                    const p = this.findParentNode(targetNode, child);
+                    if (p) return p;
+                }
+                return null;
+            }
+
+            onMouseDown(e) {
+                if (this.editingNode) this.finishEditing(true);
+
+                const { x, y } = this.screenToCanvas(e.clientX, e.clientY);
+                const clickedNode = this.findNodeAt(x, y);
+
+                if (clickedNode) {
+                    this.selectedNode = clickedNode;
+                    this.draggingNode = clickedNode;
+                    this.nodeDragOffset.x = clickedNode.x - x;
+                    this.nodeDragOffset.y = clickedNode.y - y;
+                    this.updateColorPickerValue();
+                } else {
+                    this.isPanning = true;
+                    this.startX = e.clientX - this.offsetX;
+                    this.startY = e.clientY - this.offsetY;
+                }
+            }
+
+            onMouseMove(e) {
+                const { x, y } = this.screenToCanvas(e.clientX, e.clientY);
+                this.hoveredNode = this.findNodeAt(x, y);
+
+                if (this.draggingNode) {
+                    this.draggingNode.x = x + this.nodeDragOffset.x;
+                    this.draggingNode.y = y + this.nodeDragOffset.y;
+                } else if (this.isPanning) {
+                    this.offsetX = e.clientX - this.startX;
+                    this.offsetY = e.clientY - this.startY;
+                }
+            }
+
+            onMouseUp(e) {
+                if (this.draggingNode) {
+                    this.draggingNode = null;
+                    this.save();
+                }
+                this.isPanning = false;
+            }
+
+            onDoubleClick(e) {
+                const { x, y } = this.screenToCanvas(e.clientX, e.clientY);
+                const clickedNode = this.findNodeAt(x, y);
+                if (clickedNode) {
+                    this.selectedNode = clickedNode;
+                    this.updateColorPickerValue();
+                    this.startEditing(clickedNode);
+                }
+            }
+
+            onWheel(e) {
+                e.preventDefault();
+                const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const newScale = Math.max(0.2, Math.min(3.0, this.scale * zoomFactor));
+                this.offsetX = mouseX - (mouseX - this.offsetX) * (newScale / this.scale);
+                this.offsetY = mouseY - (mouseY - this.offsetY) * (newScale / this.scale);
+                this.scale = newScale;
+            }
+
+            zoom(factor) {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const newScale = Math.max(0.2, Math.min(3.0, this.scale * factor));
+                this.offsetX = centerX - (centerX - this.offsetX) * (newScale / this.scale);
+                this.offsetY = centerY - (centerY - this.offsetY) * (newScale / this.scale);
+                this.scale = newScale;
+            }
+
+            startEditing(node) {
+                this.editingNode = node;
+                const screenPos = this.canvasToScreen(node.x, node.y);
+
+                this.input.style.display = 'block';
+                this.input.style.left = `${screenPos.x - (node.width * this.scale) / 2}px`;
+                this.input.style.top = `${screenPos.y - (node.height * this.scale) / 2}px`;
+                this.input.style.width = `${node.width * this.scale}px`;
+                this.input.style.height = `${Math.max(node.height * this.scale, 50)}px`;
+                this.input.style.fontSize = `${14 * this.scale}px`;
+                this.input.style.backgroundColor = node.color;
+                
+                this.input.value = node.text;
+                this.input.focus();
+                this.input.select();
+            }
+
+            finishEditing(saveChanges) {
+                if (!this.editingNode) return;
+                if (saveChanges) {
+                    const val = this.input.value.trim();
+                    if (val) {
+                        this.editingNode.text = val;
+                        this.updateNodeDimensions(this.editingNode);
+                        this.save();
+                    }
+                }
+                this.input.style.display = 'none';
+                this.editingNode = null;
+            }
+
+            // Word wrap function supporting up to 255 characters with dynamic auto-sizing
+            getWrappedLines(text, maxLineWidth = 200) {
+                this.ctx.font = '500 14px Inter, sans-serif';
+                const words = text.split(' ');
+                const lines = [];
+                let currentLine = words[0] || '';
+
+                for (let i = 1; i < words.length; i++) {
+                    const word = words[i];
+                    const testLine = currentLine + " " + word;
+                    const metrics = this.ctx.measureText(testLine);
+                    if (metrics.width < maxLineWidth) {
+                        currentLine = testLine;
+                    } else {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    }
+                }
+                lines.push(currentLine);
+                return lines;
+            }
+
+            updateNodeDimensions(node) {
+                this.ctx.font = '500 14px Inter, sans-serif';
+                const maxAllowedWidth = 240;
+                const lines = this.getWrappedLines(node.text, maxAllowedWidth);
+                
+                let maxLineWidth = 0;
+                lines.forEach(line => {
+                    const w = this.ctx.measureText(line).width;
+                    if (w > maxLineWidth) maxLineWidth = w;
+                });
+
+                // Minimum dimensions that expand dynamically based on text length and line breaks
+                node.width = Math.max(120, maxLineWidth + 36);
+                node.height = Math.max(50, lines.length * 20 + 26);
+            }
+
+            addChildNode() {
+                if (!this.selectedNode) {
+                    this.showToast("Please select a note first", true);
+                    return;
+                }
+                const parent = this.selectedNode;
+                const id = 'node_' + Date.now();
+                
+                const childX = parent.x + (parent.children.length % 2 === 0 ? 240 : -240);
+                const childY = parent.y + (parent.children.length * 70);
+
+                // Sub-child automatically inherits parent's branch color
+                const inheritedColor = parent.color || '#fef08a';
+                const newNode = new MindMapNode(id, 'New Note', childX, childY, inheritedColor);
+                
+                this.updateNodeDimensions(newNode);
+                parent.children.push(newNode);
+                parent.collapsed = false;
+
+                this.selectedNode = newNode;
+                this.updateColorPickerValue();
+                this.save();
+                this.startEditing(newNode);
+                this.showToast("Sticky note added with inherited branch color");
+            }
+
+            deleteSelectedNode() {
+                if (!this.selectedNode) {
+                    this.showToast("No note selected", true);
+                    return;
+                }
+                if (this.selectedNode === this.root) {
+                    this.showToast("Cannot delete the root note", true);
+                    return;
+                }
+
+                const parent = this.findParentNode(this.selectedNode);
+                if (parent) {
+                    const index = parent.children.indexOf(this.selectedNode);
+                    if (index > -1) {
+                        parent.children.splice(index, 1);
+                    }
+                    this.selectedNode = parent;
+                    this.updateColorPickerValue();
+                    this.save();
+                    this.showToast("Sticky note deleted");
+                }
+            }
+
+            startAnimationLoop() {
+                const loop = () => {
+                    this.updateAndRender();
+                    requestAnimationFrame(loop);
+                };
+                requestAnimationFrame(loop);
+            }
+
+            updateAndRender() {
+                const width = this.canvas.parentElement.clientWidth;
+                const height = this.canvas.parentElement.clientHeight;
+
+                this.ctx.clearRect(0, 0, width, height);
+
+                this.ctx.save();
+                this.ctx.translate(this.offsetX, this.offsetY);
+                this.ctx.scale(this.scale, this.scale);
+
+                const updateAll = (n) => {
+                    this.updateNodeDimensions(n);
+                    
+                    // Smooth rotation lerp: straightens to 0° when hovered, selected, or editing; tilted by default otherwise
+                    const targetRotation = (n === this.hoveredNode || n === this.selectedNode || n === this.editingNode) ? 0 : n.defaultRotation;
+                    n.currentRotation += (targetRotation - n.currentRotation) * 0.15;
+
+                    if (n.children) n.children.forEach(c => updateAll(c));
+                };
+                if (this.root) updateAll(this.root);
+
+                if (this.root) {
+                    this.drawConnections(this.root);
+                    this.drawNodes(this.root);
+                }
+
+                this.ctx.restore();
+            }
+
+            drawConnections(node) {
+                if (node.collapsed || !node.children) return;
+
+                for (let child of node.children) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(node.x, node.y);
+
+                    // Smooth bezier curves when dragging or displaying nodes
+                    const dx = child.x - node.x;
+                    const dy = child.y - node.y;
+                    const cp1x = node.x + dx * 0.5;
+                    const cp1y = node.y;
+                    const cp2x = node.x + dx * 0.5;
+                    const cp2y = child.y;
+
+                    this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, child.x, child.y);
+                    
+                    this.ctx.strokeStyle = child.color || node.color || '#3498db';//'#cbd5e1';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.stroke();
+
+                    this.drawConnections(child);
+                }
+            }
+
+            drawNodes(node) {
+                this.ctx.save();
+                this.ctx.translate(node.x, node.y);
+                this.ctx.rotate(node.currentRotation);
+
+                const halfW = node.width / 2;
+                const halfH = node.height / 2;
+
+                // Sticky note shadow for realistic physical depth
+                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.12)';
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowOffsetX = 3;
+                this.ctx.shadowOffsetY = 4;
+
+                this.ctx.beginPath();
+                this.ctx.roundRect(-halfW, -halfH, node.width, node.height, 4);
+                
+                this.ctx.fillStyle = node.color;
+                this.ctx.fill();
+
+                // Sticky note border & selection highlight
+                this.ctx.lineWidth = node === this.selectedNode ? 3 : 1;
+                this.ctx.strokeStyle = node === this.selectedNode ? '#4f46e5' : 'rgba(0,0,0,0.1)';
+                this.ctx.stroke();
+
+                // Top sticky note tape effect
+                this.ctx.shadowColor = 'transparent';
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                this.ctx.fillRect(-22, -halfH - 4, 44, 7);
+
+                // Multi-line wrapped text inside sticky note
+                this.ctx.fillStyle = '#1e293b';
+                this.ctx.font = node === this.root ? '600 14px Inter, sans-serif' : '500 14px Inter, sans-serif';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+
+                const lines = this.getWrappedLines(node.text, node.width - 24);
+                const lineHeight = 19;
+                const startY = -((lines.length - 1) * lineHeight) / 2;
+
+                lines.forEach((line, index) => {
+                    this.ctx.fillText(line, 0, startY + (index * lineHeight));
+                });
+
+                // Collapse/Expand indicator
+                if (node.children && node.children.length > 0) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(halfW, 0, 7, 0, Math.PI * 2);
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.05)';
+                    this.ctx.fill();
+                    this.ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.stroke();
+
+                    this.ctx.fillStyle = '#475569';
+                    this.ctx.font = '10px Inter, sans-serif';
+                    this.ctx.fillText(node.collapsed ? '+' : '-', halfW, 0);
+                }
+
+                this.ctx.restore();
+
+                if (!node.collapsed && node.children) {
+                    for (let child of node.children) {
+                        this.drawNodes(child);
+                    }
+                }
+            }
+
+            exportPNG() {
+                const tempCanvas = document.createElement('canvas');
+                const tCtx = tempCanvas.getContext('2d');
+
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                const calculateBounds = (n) => {
+                    minX = Math.min(minX, n.x - n.width/2);
+                    minY = Math.min(minY, n.y - n.height/2);
+                    maxX = Math.max(maxX, n.x + n.width/2);
+                    maxY = Math.max(maxY, n.y + n.height/2);
+                    if (!n.collapsed && n.children) {
+                        n.children.forEach(c => calculateBounds(c));
+                    }
+                };
+                calculateBounds(this.root);
+
+                const padding = 120;
+                const width = (maxX - minX) + padding * 2;
+                const height = (maxY - minY) + padding * 2;
+
+                tempCanvas.width = width * window.devicePixelRatio;
+                tempCanvas.height = height * window.devicePixelRatio;
+                tCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+                // Pure white canvas background for exported PNG image
+                tCtx.fillStyle = '#ffffff';
+                tCtx.fillRect(0, 0, width, height);
+
+                tCtx.save();
+                tCtx.translate(-minX + padding, -minY + padding);
+
+                const renderExportConnections = (n) => {
+                    if (!n.collapsed && n.children) {
+                        n.children.forEach(child => {
+                            tCtx.beginPath();
+                            tCtx.moveTo(n.x, n.y);
+                            const dx = child.x - n.x;
+                            const dy = child.y - n.y;
+                            tCtx.bezierCurveTo(n.x + dx * 0.5, n.y, n.x + dx * 0.5, child.y, child.x, child.y);
+                            tCtx.strokeStyle = '#cbd5e1';
+                            tCtx.lineWidth = 3;
+                            tCtx.stroke();
+                            renderExportConnections(child);
+                        });
+                    }
+                };
+                renderExportConnections(this.root);
+
+                const getWrappedExportLines = (text, maxLineWidth) => {
+                    tCtx.font = '500 14px Inter, sans-serif';
+                    const words = text.split(' ');
+                    const lines = [];
+                    let currentLine = words[0] || '';
+                    for (let i = 1; i < words.length; i++) {
+                        const word = words[i];
+                        const testLine = currentLine + " " + word;
+                        if (tCtx.measureText(testLine).width < maxLineWidth) {
+                            currentLine = testLine;
+                        } else {
+                            lines.push(currentLine);
+                            currentLine = word;
+                        }
+                    }
+                    lines.push(currentLine);
+                    return lines;
+                };
+
+                const renderExportNodes = (n) => {
+                    tCtx.save();
+                    tCtx.translate(n.x, n.y);
+                    // Straighten notes for clean exported image view
+                    tCtx.rotate(0);
+
+                    const halfW = n.width / 2;
+                    const halfH = n.height / 2;
+
+                    tCtx.beginPath();
+                    tCtx.roundRect(-halfW, -halfH, n.width, n.height, 4);
+                    tCtx.fillStyle = n.color;
+                    tCtx.fill();
+                    tCtx.lineWidth = 1;
+                    tCtx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    tCtx.stroke();
+
+                    tCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    tCtx.fillRect(-22, -halfH - 4, 44, 7);
+
+                    tCtx.fillStyle = '#1e293b';
+                    tCtx.font = n === this.root ? '600 14px Inter, sans-serif' : '500 14px Inter, sans-serif';
+                    tCtx.textAlign = 'center';
+                    tCtx.textBaseline = 'middle';
+
+                    const lines = getWrappedExportLines(n.text, n.width - 24);
+                    const lineHeight = 19;
+                    const startY = -((lines.length - 1) * lineHeight) / 2;
+
+                    lines.forEach((line, index) => {
+                        tCtx.fillText(line, 0, startY + (index * lineHeight));
+                    });
+
+                    tCtx.restore();
+
+                    if (!n.collapsed && n.children) {
+                        n.children.forEach(c => renderExportNodes(c));
+                    }
+                };
+                renderExportNodes(this.root);
+                tCtx.restore();
+
+                const link = document.createElement('a');
+                const titleText = document.getElementById('mapTitle').innerText.trim() || 'MindMap';
+                link.download = `${titleText.toLowerCase().replace(/\s+/g, '-')}.png`;
+                link.href = tempCanvas.toDataURL('image/png');
+                link.click();
+
+                this.showToast("Sticky note mind map exported as PNG successfully!");
+            }
+        }
+
+        window.onload = function() {
+            window.mindMapApp = new MindMapApp();
+        };
+    </script>
+</body>
+</html>
