@@ -52,7 +52,7 @@
                 <i class="fa-solid fa-brain text-lg"></i>
             </div>
             <div>
-                <h1 id="mapTitle" class="font-bold text-slate-800 text-lg outline-none hover:bg-slate-50 px-2 py-0.5 rounded cursor-pointer transition" contenteditable="true" title="Click to rename">Mind Map</h1>
+                <h1 id="mapTitle" class="font-bold text-slate-800 text-lg outline-none hover:bg-slate-50 px-2 py-0.5 rounded cursor-pointer transition" contenteditable="true" title="Click to rename">Neural Network</h1>
                 <p class="text-xs text-slate-400 px-2">Chain your thoughts</p>
             </div>
         </div>
@@ -130,12 +130,14 @@
                 this.collapsed = false;
                 // Random default tilt between -5 and +5 degrees for sticky note feel
 
-                if(id == `1`)
+                if(id == `1`) {    
                     this.defaultRotation = 0;
-                else
+                }
+                else{
                     this.defaultRotation = (Math.random() * 20 - 10) * (Math.PI / 180);
-                
-                    this.currentRotation = this.defaultRotation;
+                }
+
+                this.currentRotation = this.defaultRotation;
             }
         }
 
@@ -293,7 +295,7 @@
                     if (confirm("Reset sticky note mind map to default template?")) {
                         localStorage.removeItem('mindmap_stickies_data_v2');
                         localStorage.removeItem('mindmap_stickies_title_v2');
-                        document.getElementById('mapTitle').innerText = "My Mind Map";
+                        document.getElementById('mapTitle').innerText = "Neural Network";
                         this.initData();
                         this.centerView();
                         this.showToast("Mind map reset successfully");
@@ -616,8 +618,22 @@
 
                     this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, child.x, child.y);
                     
+                    const isSelected = (node === this.selectedNode);
+                    if (isSelected) {
+                        // Enable dashed line: [dash length, gap length]
+                        this.ctx.setLineDash([8, 6]);                         
+                        this.ctx.lineDashOffset = -(performance.now() / 30) % 14;
+                        this.ctx.lineWidth = 5;
+                    } 
+                    else {
+                        // Solid line for unselected nodes
+                        this.ctx.setLineDash([]);
+                        this.ctx.lineWidth = 3;
+                    }
+
+
                     this.ctx.strokeStyle = child.color || node.color || '#3498db';//'#cbd5e1';
-                    this.ctx.lineWidth = 3;
+                    
                     this.ctx.stroke();
 
                     this.drawConnections(child);
