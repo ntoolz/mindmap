@@ -9,7 +9,7 @@
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -41,6 +41,29 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        canvas {
+            background-color: #f5f5f5; /* Makes the transparent canvas look light blue */
+        }
+
+        @keyframes textclip {
+            to { background-position: 200% center;}
+        }
+        
+        #logo{
+            background-image: linear-gradient(100deg, #ff47b5 0%, #3aef3c 50%, #5045ea 75%, #ff47b5 100%);
+
+            background-size: auto auto;
+            background-clip: border-box;
+            background-size: 200% auto;
+            animation: textclip 1s ease infinite;
+        }
+        
+        @media (display-mode: fullscreen) {
+            header {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="w-screen h-screen flex flex-col">
@@ -48,62 +71,75 @@
     <!-- Top Navigation Header -->
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shadow-sm">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+            <div id="logo" class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200">
                 <i class="fa-solid fa-brain text-lg"></i>
             </div>
             <div>
-                <h1 id="mapTitle" class="font-bold text-slate-800 text-lg outline-none hover:bg-slate-50 px-2 py-0.5 rounded cursor-pointer transition" contenteditable="true" title="Click to rename">Neural Network</h1>
-                <p class="text-xs text-slate-400 px-2">Chain your thoughts</p>
+                <h1 id="mapTitle" class="font-bold text-slate-800 text-lg outline-none hover:bg-slate-50 px-2 py-0.5 rounded cursor-pointer transition" contenteditable="true" title="Click to rename">Neural Map</h1>
+                <p class="text-xs text-slate-400 px-2">Chain your nurons together</p>
             </div>
+            <div class="h-6 w-px bg-slate-500 mx-1"></div>
+            
         </div>
 
         <div class="flex items-center space-x-2">
+
+
             <!-- Branch Color Picker -->
-            <div class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Change selected branch color & inherit to sub-children">
-                <label for="branchColorPicker" class="text-xs font-medium text-slate-600 cursor-pointer">Note Color:</label>
+            <div class="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Change selected branch color &amp; inherit to sub-children">
+                <label for="branchColorPicker" class="text-sm font-medium text-slate-600 cursor-pointer">Node Color:</label>
                 <input type="color" id="branchColorPicker" value="#fef08a" class="w-6 h-6 rounded border-0 cursor-pointer bg-transparent">
             </div>
 
-            <div class="h-6 w-px bg-slate-200 mx-1"></div>
-
-            <button id="btnZoomIn" class="p-2.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200" title="Zoom In">
+            <div class="h-6 w-px bg-slate-500 mx-1"></div>
+            <button id="btnZoomIn" class="px-3 py-2 text-sm font-medium  text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200" title="Zoom In">
                 <i class="fa-solid fa-magnifying-glass-plus"></i>
             </button>
-            <button id="btnZoomOut" class="p-2.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200" title="Zoom Out">
+            <button id="btnZoomOut" class="px-3 py-2 text-sm font-medium  text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200" title="Zoom Out">
                 <i class="fa-solid fa-magnifying-glass-minus"></i>
             </button>
             <button id="btnResetView" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200">
                 <i class="fa-solid fa-compress mr-1.5"></i> Reset View
             </button>
-            <div class="h-6 w-px bg-slate-200 mx-1"></div>
-            <button id="btnAddChild" class="px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-sm shadow-indigo-100 flex items-center">
-                <i class="fa-solid fa-plus mr-1.5"></i> Add Child <span class="ml-1.5 text-xs bg-indigo-500 px-1.5 py-0.5 rounded text-indigo-100">Tab</span>
+            <div class="h-6 w-px bg-slate-500 mx-1"></div>
+            <button id="btnAddChild" class="px-3 py-2 text-sm font-medium text-indigo-500 hover:text-white  hover:bg-indigo-500 rounded-lg transition shadow-sm shadow-indigo-100 flex items-center">
+                <i class="fa-solid fa-plus mr-1.5"></i> Add Node<span class="ml-1.5 text-xs bg-indigo-500 px-1.5 py-0.5 rounded text-indigo-100">Tab</span>
             </button>
-            <button id="btnDelete" class="p-2.5 text-rose-600 hover:bg-rose-50 rounded-lg transition border border-slate-200" title="Delete Note (Delete)">
-                <i class="fa-solid fa-trash-can"></i>
+            <button id="btnDelete" class="px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-500 hover:text-white rounded-lg transition border border-slate-200" title="Delete Note (Delete)">
+                <i class="fa-solid fa-trash-can"></i> Delete Node <span class="ml-1.5 text-xs bg-rose-500 px-1.5 py-0.5 rounded text-indigo-100">Del</span>
             </button>
-            <div class="h-6 w-px bg-slate-200 mx-1"></div>
-            <button id="btnExport" class="px-3 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition flex items-center shadow-sm">
+
+            <div class="h-6 w-px bg-slate-500 mx-1"></div>
+
+                        <button id="btnLoadMap" class="px-3 py-2 text-sm font-medium border border-slate-200 text-slate-500  hover:bg-yellow-100 hover:text-yellow-600 rounded-lg transition shadow-sm shadow-indigo-100 flex items-center">
+                <i class="fa-solid fa-folder-open mr-1.5 "></i>Load
+            </button>
+            <button id="btnSaveMap" class="px-3 py-2 text-sm font-medium border border-slate-200 text-slate-500 hover:bg-green-100 hover:text-green-600 rounded-lg transition shadow-sm shadow-indigo-100 flex items-center">
+                <i class="fa-solid fa-floppy-disk mr-1.5 "></i>Save
+            </button>
+            <button id="btnExport" class="px-3 py-2 text-sm font-medium text-slate-500 bg-white hover:bg-blue-100 hover:text-blue-600 border border-slate-200 rounded-lg transition flex items-center shadow-sm">
                 <i class="fa-solid fa-download mr-1.5 text-indigo-600"></i> Export PNG
             </button>
-            <button id="btnClear" class="p-2.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition border border-slate-200" title="Reset Mind Map">
-                <i class="fa-solid fa-rotate-right"></i>
+            <button id="btnClear" class="p-3 py-2 text-sm font-medium text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition border border-slate-200" title="Reset Mind Map">
+                <i class="fa-solid fa-rotate-right mr-1.5 "></i> Reset
             </button>
+
         </div>
     </header>
 
     <!-- Main Canvas Viewport -->
     <main class="flex-1 relative overflow-hidden bg-white">
-        <canvas id="mindmapCanvas" class="w-full h-full"></canvas>
+        <canvas id="mindmapCanvas" class="w-full h-full" width="1921" height="882"></canvas>
 
         <!-- Keyboard Shortcuts Legend -->
-        <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur border border-slate-200 p-3 rounded-xl shadow-lg text-xs text-slate-500 space-y-1 pointer-events-none">
-            <p class="font-semibold text-slate-700 mb-1">Keys:</p>
+        <!--div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur border border-slate-200 p-3 rounded-xl shadow-lg text-xs text-slate-500 space-y-1 pointer-events-none">
+        
+            <p class="font-semibold text-slate-700 mb-1">Keys:</p>            
             <p><span class="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">Tab</span> Add Child Note</p>
             <p><span class="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">Del / Backspace</span> Delete Note</p>
-
             <p><span class="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">Double Click</span> Edit Text (max 255 chars)</p>
-        </div>
+        
+        </div -->
 
         <!-- Node Inline Textarea Editor (Hidden by default) -->
         <textarea id="nodeInput" maxlength="255" class="absolute hidden z-25 p-3 text-sm bg-amber-50 border-2 border-amber-400 rounded shadow-2xl outline-none font-medium text-slate-900 resize-none"></textarea>
@@ -124,20 +160,45 @@
                 this.x = x;
                 this.y = y;
                 this.color = color;
+                this.fgcolor = this._contrastColor(color);
                 this.children = [];
-                this.width = 120; // Minimum initial width
+                this.width = 60; // Minimum initial width
                 this.height = 50; // Minimum initial height
                 this.collapsed = false;
-                // Random default tilt between -5 and +5 degrees for sticky note feel
 
+                // Random default tilt between -5 and +5 degrees for sticky note feel
                 if(id == `1`) {    
                     this.defaultRotation = 0;
+                    this.color = `#FeFeFe`;
                 }
                 else{
                     this.defaultRotation = (Math.random() * 20 - 10) * (Math.PI / 180);
                 }
-
+                
                 this.currentRotation = this.defaultRotation;
+            }
+
+            _contrastColor(hexColor) {
+                // Remove the '#' if it's present
+                let color = hexColor.replace('#', '');
+
+                // Handle shorthand hex codes (e.g., "fff" -> "ffffff")
+                if (color.length === 3) {
+                    color = color.split('').map(char => char + char).join('');
+                }
+
+                // Convert hex string into red, green, and blue integers
+                const r = parseInt(color.substring(0, 2), 16);
+                const g = parseInt(color.substring(2, 4), 16);
+                const b = parseInt(color.substring(4, 6), 16);
+
+                // Calculate YIQ (Luma) value using human eye perception weights
+                // Red, green, and blue contribute differently to perceived brightness
+                const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+
+                // A value of 128 is the absolute midpoint of brightness (0-255).
+                // If it's above 128, the background is light -> use dark text.
+                return (yiq >= 128) ? '#000000' : '#ffffff';
             }
         }
 
@@ -147,6 +208,8 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.input = document.getElementById('nodeInput');
                 this.colorPicker = document.getElementById('branchColorPicker');
+                this.ctx.fillStyle = "#ffffff";
+
                 
                 // Viewport transforms (Pan & Zoom)
                 this.scale = 1;
@@ -169,6 +232,8 @@
                 this.resizeCanvas();
                 this.centerView();
                 this.startAnimationLoop();
+
+                this.showToast("use Tab/Del keybaord shotcuts");
             }
 
             initData() {
@@ -189,8 +254,7 @@
                 }
 
                 // Default Sticky Note Mind Map with auto-sizing nodes Visualize, organizing, brainstorming, planning, structuring, and connecting
-                this.root = new MindMapNode('1', 'My Mind', 0, 0, '#fef08a'); // Soft Yellow
-                
+                this.root = new MindMapNode('1', 'My Mind', 0, 0, '#fef08a'); // Soft Yellow #fef08a-+            
                 const child1 = new MindMapNode('2', 'Observe', -280, -120, '#bae6fd'); // Soft Sky Blue
                 const child2 = new MindMapNode('3', 'Orient', 280, -120, '#bbf7d0'); // Soft Green
                 const child3 = new MindMapNode('4', 'Decide', -280, 120, '#fed7aa'); // Soft Orange
@@ -272,6 +336,7 @@
                         const newColor = e.target.value;
                         const updateSubtreeColor = (node, color) => {
                             node.color = color;
+                            node.fgcolor = this._contrastColor(color);
                             if (node.children) {
                                 node.children.forEach(child => updateSubtreeColor(child, color));
                             }
@@ -289,6 +354,13 @@
                     this.centerView();
                     this.showToast("View reset to center");
                 });
+
+                //load file
+                document.getElementById('btnLoadMap').addEventListener('click', () => this.loadJson());
+
+                //save
+                document.getElementById('btnSaveMap').addEventListener('click', () => this.saveJson());
+
                 document.getElementById('btnAddChild').addEventListener('click', () => this.addChildNode());
                 document.getElementById('btnDelete').addEventListener('click', () => this.deleteSelectedNode());
                 document.getElementById('btnClear').addEventListener('click', () => {
@@ -310,7 +382,8 @@
                     if (e.key === 'Enter' && e.ctrlKey) {
                         e.preventDefault();
                         this.finishEditing(true);
-                    } else if (e.key === 'Escape') {
+                    } 
+                    else if (e.key === 'Escape') {
                         this.finishEditing(false);
                     }
                 });
@@ -324,9 +397,22 @@
                     if (e.key === 'Tab') {
                         e.preventDefault();
                         this.addChildNode();
-                    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                    } 
+                    else if (e.key === 'Delete'){// || e.key === 'Backspace') {
                         e.preventDefault();
                         this.deleteSelectedNode();
+                    }
+
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                        e.preventDefault();
+                        this.saveJson();                
+                        console.log('Ctrl + S detected! Saving your work...');
+                    }
+
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
+                        e.preventDefault();
+                        this.loadJson();                
+                        console.log('Ctrl + S detected! Saving your work...');
                     }
                 });
             }
@@ -511,7 +597,7 @@
                 });
 
                 // Minimum dimensions that expand dynamically based on text length and line breaks
-                node.width = Math.max(120, maxLineWidth + 36);
+                node.width = Math.max(60, maxLineWidth + 36);
                 node.height = Math.max(50, lines.length * 20 + 26);
             }
 
@@ -528,7 +614,7 @@
 
                 // Sub-child automatically inherits parent's branch color
                 const inheritedColor = parent.color || '#fef08a';
-                const newNode = new MindMapNode(id, 'New Note', childX, childY, inheritedColor);
+                const newNode = new MindMapNode(id, 'New Nuron', childX, childY, inheritedColor);
                 
                 this.updateNodeDimensions(newNode);
                 parent.children.push(newNode);
@@ -624,18 +710,15 @@
                         this.ctx.setLineDash([8, 6]);                         
                         this.ctx.lineDashOffset = -(performance.now() / 30) % 14;
                         this.ctx.lineWidth = 5;
-                    } 
+                    }
                     else {
                         // Solid line for unselected nodes
                         this.ctx.setLineDash([]);
-                        this.ctx.lineWidth = 3;
+                        this.ctx.lineWidth = 5;
                     }
 
-
-                    this.ctx.strokeStyle = child.color || node.color || '#3498db';//'#cbd5e1';
-                    
+                    this.ctx.strokeStyle = child.color || node.color || '#3498db';//'#cbd5e1';                
                     this.ctx.stroke();
-
                     this.drawConnections(child);
                 }
             }
@@ -665,13 +748,8 @@
                 this.ctx.strokeStyle = node === this.selectedNode ? '#4f46e5' : 'rgba(0,0,0,0.1)';
                 this.ctx.stroke();
 
-                // Top sticky note tape effect
-                this.ctx.shadowColor = 'transparent';
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-                this.ctx.fillRect(-22, -halfH - 4, 44, 7);
-
                 // Multi-line wrapped text inside sticky note
-                this.ctx.fillStyle = '#1e293b';
+                this.ctx.fillStyle = node.fgcolor;//'#1e293b';
                 this.ctx.font = node === this.root ? '600 14px Inter, sans-serif' : '500 14px Inter, sans-serif';
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
@@ -708,7 +786,7 @@
                 }
             }
 
-            exportPNG() {
+            async exportPNG() {
                 const tempCanvas = document.createElement('canvas');
                 const tCtx = tempCanvas.getContext('2d');
 
@@ -724,7 +802,7 @@
                 };
                 calculateBounds(this.root);
 
-                const padding = 120;
+                const padding = 60;
                 const width = (maxX - minX) + padding * 2;
                 const height = (maxY - minY) + padding * 2;
 
@@ -747,8 +825,9 @@
                             const dx = child.x - n.x;
                             const dy = child.y - n.y;
                             tCtx.bezierCurveTo(n.x + dx * 0.5, n.y, n.x + dx * 0.5, child.y, child.x, child.y);
-                            tCtx.strokeStyle = '#cbd5e1';
-                            tCtx.lineWidth = 3;
+                            tCtx.strokeStyle = child.color || node.color || '#3498db';//'#cbd5e1';  
+
+                            tCtx.lineWidth = 5;
                             tCtx.stroke();
                             renderExportConnections(child);
                         });
@@ -792,8 +871,8 @@
                     tCtx.strokeStyle = 'rgba(0,0,0,0.1)';
                     tCtx.stroke();
 
-                    tCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-                    tCtx.fillRect(-22, -halfH - 4, 44, 7);
+                    //tCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    //tCtx.fillRect(-22, -halfH - 4, 44, 7);
 
                     tCtx.fillStyle = '#1e293b';
                     tCtx.font = n === this.root ? '600 14px Inter, sans-serif' : '500 14px Inter, sans-serif';
@@ -817,15 +896,138 @@
                 renderExportNodes(this.root);
                 tCtx.restore();
 
-                const link = document.createElement('a');
-                const titleText = document.getElementById('mapTitle').innerText.trim() || 'MindMap';
-                link.download = `${titleText.toLowerCase().replace(/\s+/g, '-')}.png`;
-                link.href = tempCanvas.toDataURL('image/png');
-                link.click();
+                try{
+                    console.log("Save PNG");
+                    const keyName = document.getElementById('mapTitle').innerText.trim() || 'MindMap';
+                    const dataUrl = tempCanvas.toDataURL('image/png');
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: `${keyName}.png`,
+                        types: [{
+                            description: 'PNG File',
+                            accept: {
+                                'image/png': ['.png']
+                            }
+                        }]
+                    });
+
+                    // 2. Write the data directly to the chosen file
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();            
+                    console.log("File saved successfully!");
+                }
+                catch(er){
+                    debugger;
+                    const link = document.createElement('a');
+                    const titleText = document.getElementById('mapTitle').innerText.trim() || 'MindMap';
+                    link.download = `${titleText.toLowerCase().replace(/\s+/g, '-')}.png`;
+                    link.href = tempCanvas.toDataURL('image/png');
+                    link.click();
+                }
 
                 this.showToast("Sticky note mind map exported as PNG successfully!");
             }
+
+            loadJson(){
+                debugger;
+                console.log("Load MAp");
+                const targetKey = 'mindmap_stickies_data_v2';
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.nn';
+
+                fileInput.onchange = (event) => {
+                    const file = event.target.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        try {
+                        const fileContent = e.target.result;
+                        
+                        // Verify it's valid JSON before saving
+                        JSON.parse(fileContent); 
+                        
+                        // Save the raw JSON string directly into your target key
+                        localStorage.setItem(targetKey, fileContent);
+                        console.log(`%cSuccess: Data loaded into "${targetKey}"! Refresh the page to see changes.`, 'color: green; font-weight: bold;');
+                        } catch (err) {
+                        console.error('Error: The file is not a valid JSON format.', err);
+                        }
+                    };
+                    
+                    reader.readAsText(file);
+                };
+
+                fileInput.click();     
+                setTimeout(()=>{
+                    window.mindMapApp = new MindMapApp();
+                }, 2000); 
+            }
+
+            async saveJson(){
+                try{
+                    console.log("Save Map");
+                    const keyName = 'mindmap_stickies_data_v2';
+                    const rawData = localStorage.getItem(keyName) || '{}';
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: `${keyName}.nn`,
+                        types: [{
+                            description: 'Neural Network File',
+                            accept: {
+                                'application/json': ['.nn']
+                            }
+                        }]
+                    });
+
+                    // 2. Write the data directly to the chosen file
+                    const writable = await handle.createWritable();
+                    await writable.write(rawData);
+                    await writable.close();            
+                    console.log("File saved successfully!");
+                }
+                catch(er){
+                    debugger;
+                    console.log("Save Map");
+                    const keyName = 'mindmap_stickies_data_v2';//document.getElementById('mapTitle').innerText.trim();//
+                    const rawData = localStorage.getItem(keyName);
+                    const blob = new Blob([rawData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${keyName}.nn`;
+                    a.click();
+                    URL.revokeObjectURL(url); 
+                }
+            }
+
+            _contrastColor(hexColor) {
+                // Remove the '#' if it's present
+                let color = hexColor.replace('#', '');
+
+                // Handle shorthand hex codes (e.g., "fff" -> "ffffff")
+                if (color.length === 3) {
+                    color = color.split('').map(char => char + char).join('');
+                }
+
+                // Convert hex string into red, green, and blue integers
+                const r = parseInt(color.substring(0, 2), 16);
+                const g = parseInt(color.substring(2, 4), 16);
+                const b = parseInt(color.substring(4, 6), 16);
+
+                // Calculate YIQ (Luma) value using human eye perception weights
+                // Red, green, and blue contribute differently to perceived brightness
+                const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+
+                // A value of 128 is the absolute midpoint of brightness (0-255).
+                // If it's above 128, the background is light -> use dark text.
+                return (yiq >= 128) ? '#000000' : '#ffffff';
+            }
         }
+
+       
 
         window.onload = function() {
             window.mindMapApp = new MindMapApp();
